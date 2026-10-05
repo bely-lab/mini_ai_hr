@@ -7,6 +7,7 @@ import {
   updateEmployee,
   deactivateEmployee,
 } from "@/lib/employees/data";
+
 import {
   employeeInputSchema,
   employeeUpdateSchema,
@@ -17,6 +18,20 @@ import {
 export type EmployeeActionState = {
   error?: string;
 };
+
+function getValidationError(
+  result: ReturnType<typeof employeeInputSchema.safeParse>,
+) {
+  if (result.success) {
+    return undefined;
+  }
+
+  const firstError = result.error.issues[0];
+
+  return firstError
+    ? `${firstError.path.join(".")}: ${firstError.message}`
+    : "Please check the employee information.";
+}
 
 export async function createEmployeeAction(
   _previousState: EmployeeActionState,
@@ -38,18 +53,15 @@ export async function createEmployeeAction(
   const result = employeeInputSchema.safeParse(input);
 
   if (!result.success) {
-    const firstError = result.error.issues[0];
-
     return {
-      error: firstError
-        ? `${firstError.path.join(".")}: ${firstError.message}`
-        : "Please check the employee information.",
+      error: getValidationError(result),
     };
   }
 
   try {
     const employee = await createEmployee(result.data);
-    redirect(`/employees/${employee.id}`);
+
+    redirect(`/employees/${employee.id}?success=created`);
   } catch (error) {
     return {
       error:
@@ -79,7 +91,9 @@ export async function updateEmployeeAction(
     employment_type: String(formData.get("employment_type") ?? ""),
     joining_date: String(formData.get("joining_date") ?? ""),
     status:
-      formData.get("status") === "inactive" ? "inactive" : "active",
+      formData.get("status") === "inactive"
+        ? "inactive"
+        : "active",
     manager_name: String(formData.get("manager_name") ?? ""),
     work_location: String(formData.get("work_location") ?? ""),
   };
@@ -98,7 +112,8 @@ export async function updateEmployeeAction(
 
   try {
     await updateEmployee(id, result.data);
-    redirect(`/employees/${id}`);
+
+    redirect(`/employees/${id}?success=updated`);
   } catch (error) {
     return {
       error:
@@ -118,5 +133,5 @@ export async function deactivateEmployeeAction(formData: FormData) {
 
   await deactivateEmployee(id);
 
-  redirect(`/employees/${id}`);
+  redirect(`/employees/${id}?success=deactivated`);
 }

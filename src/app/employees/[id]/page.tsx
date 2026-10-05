@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Bot, UserCheck, Users, UserX } from "lucide-react";
 
-import { DeactivateEmployeeButton } from "@/components/deactivate-employee-button";
-import { getEmployee } from "@/lib/employees/data";
+import { getEmployees } from "@/lib/employees/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,149 +10,140 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
-type EmployeePageProps = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+export default async function DashboardPage() {
+  const employees = await getEmployees();
 
-export default async function EmployeePage({
-  params,
-}: EmployeePageProps) {
-  const { id } = await params;
-  const employee = await getEmployee(id);
+  const activeEmployees = employees.filter(
+    (employee) => employee.status === "active",
+  );
 
-  if (!employee) {
-    notFound();
-  }
+  const inactiveEmployees = employees.filter(
+    (employee) => employee.status === "inactive",
+  );
+
+  const recentEmployees = employees.slice(0, 5);
+
+  const stats = [
+    {
+      title: "Total employees",
+      value: employees.length,
+      icon: Users,
+    },
+    {
+      title: "Active",
+      value: activeEmployees.length,
+      icon: UserCheck,
+    },
+    {
+      title: "Inactive",
+      value: inactiveEmployees.length,
+      icon: UserX,
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon">
-            <Link
-              href="/employees"
-              className="flex h-full w-full items-center justify-center"
-            >
-              <ArrowLeft />
-              <span className="sr-only">Back to employees</span>
-            </Link>
-          </Button>
-
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {employee.full_name}
-            </h1>
-            <p className="text-muted-foreground">
-              {employee.job_title}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Link
-              href={`/employees/${employee.id}/edit`}
-              className="flex items-center gap-2"
-            >
-              <Pencil className="size-4" />
-              Edit
-            </Link>
-          </Button>
-
-          {employee.status === "active" && (
-            <DeactivateEmployeeButton employeeId={employee.id} />
-          )}
-        </div>
+    <main className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage your employee records and HR tasks.
+        </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+
+          return (
+            <Card key={stat.title}>
+              <CardContent className="flex items-center justify-between p-6">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.title}
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold">
+                    {stat.value}
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-muted p-3">
+                  <Icon className="size-5" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <Card>
           <CardHeader>
-            <CardTitle>Employee information</CardTitle>
+            <CardTitle>Recent employees</CardTitle>
           </CardHeader>
 
-          <Separator />
+          <CardContent>
+            {recentEmployees.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No employees have been added yet.
+              </p>
+            ) : (
+              <div className="divide-y">
+                {recentEmployees.map((employee) => (
+                  <Link
+                    key={employee.id}
+                    href={`/employees/${employee.id}`}
+                    className="flex items-center justify-between gap-4 rounded-md py-4 first:pt-0 last:pb-0 hover:bg-muted/40"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {employee.full_name}
+                      </p>
 
-          <CardContent className="grid gap-6 pt-6 sm:grid-cols-2">
-            <Info label="Full name" value={employee.full_name} />
-            <Info label="Email" value={employee.email} />
-            <Info label="Phone" value={employee.phone} />
-            <Info label="Job title" value={employee.job_title} />
-            <Info label="Department" value={employee.department} />
-            <Info
-              label="Employment type"
-              value={employee.employment_type}
-            />
-            <Info label="Joining date" value={employee.joining_date} />
-            <Info label="Manager" value={employee.manager_name} />
-            <Info
-              label="Work location"
-              value={employee.work_location}
-            />
+                      <p className="text-sm text-muted-foreground">
+                        {employee.job_title} · {employee.department}
+                      </p>
+                    </div>
 
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Status</p>
-              <Badge
-                variant={
-                  employee.status === "active"
-                    ? "default"
-                    : "secondary"
-                }
-              >
-                {employee.status}
-              </Badge>
-            </div>
+                    <Badge
+                      variant={
+                        employee.status === "active"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {employee.status}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>AI summary</CardTitle>
+            <CardTitle>Quick actions</CardTitle>
           </CardHeader>
 
-          <Separator />
+          <CardContent className="space-y-3">
+            <Link href="/assistant" className="block">
+              <Button className="w-full">
+                <Bot className="mr-2 size-4" />
+                Open AI Assistant
+              </Button>
+            </Link>
 
-          <CardContent className="pt-6">
-            {employee.summary ? (
-              <div className="space-y-3">
-                <p className="text-sm leading-6">{employee.summary}</p>
-
-                {employee.summary_generated_at && (
-                  <p className="text-xs text-muted-foreground">
-                    Generated{" "}
-                    {new Date(
-                      employee.summary_generated_at,
-                    ).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No AI summary has been generated yet.
-              </p>
-            )}
+            <Link href="/employees" className="block">
+              <Button variant="outline" className="w-full">
+                <Users className="mr-2 size-4" />
+                View employees
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function Info({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="font-medium">{value}</p>
-    </div>
+    </main>
   );
 }
