@@ -40,14 +40,10 @@ const phoneSchema = z
   .trim()
   .min(7, "Phone number is required.")
   .max(30, "Phone number is too long.")
-  .refine(
-    (value) => {
-      const phoneNumber = parsePhoneNumberFromString(value, "FI");
-
-      return phoneNumber?.isValid() ?? false;
-    },
-    "Please enter a valid phone number.",
-  );
+  .refine((value) => {
+    const phoneNumber = parsePhoneNumberFromString(value, "FI");
+    return phoneNumber?.isValid() ?? false;
+  }, "Please enter a valid phone number.");
 
 const joiningDateSchema = z
   .iso.date("Please enter a valid joining date.")
@@ -66,33 +62,35 @@ const personNameSchema = z
     "Name can only contain letters, spaces, apostrophes, dots, and hyphens.",
   );
 
+const managerNameSchema = z.preprocess(
+  (value) => {
+    if (typeof value === "string" && value.trim() === "") {
+      return undefined;
+    }
+
+    return value;
+  },
+  personNameSchema.optional(),
+);
+
 export const employeeInputSchema = z.object({
   full_name: personNameSchema,
-
   email: emailSchema,
-
   phone: phoneSchema,
-
   job_title: z
     .string()
     .trim()
-    .min(2, "Job title must contain at least 2 characters.")
+    .min(2, "Job title is required.")
     .max(120, "Job title is too long."),
-
   department: z.enum(DEPARTMENTS),
-
   employment_type: z.enum(EMPLOYMENT_TYPES),
-
   joining_date: joiningDateSchema,
-
   status: z.enum(EMPLOYEE_STATUSES),
-
-  manager_name: personNameSchema,
-
+  manager_name: managerNameSchema,
   work_location: z
     .string()
     .trim()
-    .min(2, "Work location must contain at least 2 characters.")
+    .min(2, "Work location is required.")
     .max(120, "Work location is too long."),
 });
 

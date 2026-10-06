@@ -56,15 +56,15 @@ export function AppSidebar() {
       className="bg-sidebar border-r-0"
     >
       <SidebarHeader className="px-3 py-3">
-        <div className="flex h-11 items-center gap-3">
+        <div className="flex h-16 items-center gap-3">
           <Image
-            src="/logo.png"
-            alt="SITA.dev"
-            width={96}
-            height={96}
-            priority
-            className="size-11 object-contain"
-          />
+  src="/logo.png"
+  alt="SITA.dev"
+  width={150}
+  height={150}
+  priority
+  className="size-16 object-contain"
+/>
 
           <p className="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
             Mini AI HR

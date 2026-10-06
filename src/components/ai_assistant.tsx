@@ -33,11 +33,11 @@ const examplePrompts = [
   },
   {
     title: "Find an employee",
-    prompt: "Find Belaynesh Mossie Kndie.",
+    prompt: "Find James",
   },
   {
     title: "Generate a summary",
-    prompt: "Generate a summary for Belaynesh Mossie Kndie.",
+    prompt: "Generate a summary for James Michael.",
   },
 ];
 

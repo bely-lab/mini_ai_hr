@@ -2,8 +2,9 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import * as z from "zod";
 
-import { createClient } from "@/lib/supabase/server";
 import { employeeTools } from "@/lib/ai/tools";
+import { saveEmployeeSummary } from "@/lib/employees/data";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ const messageSchema = z.object({
 });
 
 const requestSchema = z.object({
-  messages: z.array(messageSchema).min(1).max(50),
+  messages: z.array(messageSchema).min(1).max(20),
 });
 
 type RuntimeTool = {
@@ -46,31 +47,22 @@ You are the AI HR Assistant for Mini AI HR.
 
 You help an authenticated HR Admin manage employee records.
 
-You can:
-- list employees
-- find a specific employee
-- create an employee
-- update employee information
-- deactivate an employee
-- generate and save an employee summary
+Use the available tools for all employee data and actions.
 
 Rules:
-1. Never invent employee information.
-2. Use employee tools for employee data instead of relying on conversation assumptions.
-3. For employee creation, collect all required fields before calling create_employee:
-   full name, email, phone, job title, department, employment type,
-   joining date, status, manager name, and work location.
-4. Never guess missing required information.
-5. Joining dates cannot be in the future.
-6. When updating or deactivating an employee, identify the employee unambiguously.
-7. If multiple employees have the same name, ask the HR Admin to identify the correct employee by email or another identifier.
-8. Never update or deactivate an employee based on an uncertain match.
-9. Employee status is not changed through update_employee. Use deactivate_employee for deactivation.
-10. Do not claim an action succeeded unless the corresponding tool succeeded.
-11. If a tool reports an error or no change, explain that result accurately.
-12. When generating an employee summary, use only information returned by the employee tool. Do not invent achievements, responsibilities, skills, qualifications, or other facts.
-13. After successfully completing an action, briefly explain what was done.
-14. Keep responses concise and professional.
+- Never invent employee information.
+- Ask for missing required information before creating an employee.
+- Never guess missing information.
+- Joining dates cannot be in the future.
+- Identify employees unambiguously before updating or deactivating them.
+- If multiple employees match a name, ask for clarification.
+- Use deactivate_employee to deactivate employees.
+- Do not change employee status through update_employee.
+- Never claim an action succeeded unless its tool succeeded.
+- Generate summaries only from information returned by the employee tools.
+- When generate_employee_summary is used, respond with the concise factual employee summary itself.
+- Do not add information that is not present in the employee record.
+- Keep responses concise and professional.
 `;
 
 function isRateLimitError(error: unknown): boolean {
@@ -141,7 +133,7 @@ export async function POST(request: Request) {
       0,
     );
 
-    if (totalCharacters > 40000) {
+    if (totalCharacters > 12000) {
       return NextResponse.json(
         {
           error:
@@ -164,6 +156,7 @@ export async function POST(request: Request) {
         instructions: SYSTEM_INSTRUCTIONS,
         input,
         tools: toolDefinitions,
+        max_output_tokens: 1000,
       });
     } catch (error) {
       console.error("OpenAI request failed:", error);
@@ -174,14 +167,42 @@ export async function POST(request: Request) {
       );
     }
 
+    let summaryEmployeeId: string | null = null;
+    let summarySaved = false;
+
     for (let iteration = 0; iteration < 8; iteration += 1) {
       const functionCalls = response.output.filter(isFunctionCall);
 
       if (functionCalls.length === 0) {
+        const message =
+          response.output_text ||
+          "I couldn't generate a response.";
+
+        if (summaryEmployeeId && !summarySaved && message.trim()) {
+          try {
+            await saveEmployeeSummary(
+              summaryEmployeeId,
+              message,
+            );
+            summarySaved = true;
+          } catch (error) {
+            console.error(
+              "Failed to save generated employee summary:",
+              error,
+            );
+
+            return NextResponse.json(
+              {
+                error:
+                  "The summary was generated but could not be saved. Please try again.",
+              },
+              { status: 500 },
+            );
+          }
+        }
+
         return NextResponse.json({
-          message:
-            response.output_text ||
-            "I couldn't generate a response.",
+          message,
         });
       }
 
@@ -205,13 +226,31 @@ export async function POST(request: Request) {
 
         try {
           const argumentsValue = JSON.parse(call.arguments);
-
           const validatedArguments =
             tool.parameters.parse(argumentsValue);
 
           const result = await tool.execute(
             validatedArguments,
           );
+
+          if (call.name === "generate_employee_summary") {
+            const resultRecord =
+              result as {
+                success?: boolean;
+                employee?: { id?: string };
+              };
+
+            if (
+              resultRecord.success &&
+              resultRecord.employee?.id
+            ) {
+              summaryEmployeeId = resultRecord.employee.id;
+            }
+          }
+
+          if (call.name === "save_employee_summary") {
+            summarySaved = true;
+          }
 
           toolOutputs.push({
             type: "function_call_output",
@@ -245,6 +284,7 @@ export async function POST(request: Request) {
           previous_response_id: response.id,
           input: toolOutputs,
           tools: toolDefinitions,
+          max_output_tokens: 1000,
         });
       } catch (error) {
         console.error(

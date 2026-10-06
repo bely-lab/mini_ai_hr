@@ -48,7 +48,7 @@ export default function LoginPage() {
           <Image
             src="/logo.png"
             alt="SITA.dev"
-            width={180}
+            width={170}
             height={48}
             priority
             className="h-10 w-auto object-contain"

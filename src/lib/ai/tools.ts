@@ -34,7 +34,12 @@ const employeeAiInputSchema = z.object({
   employment_type: z.enum(EMPLOYMENT_TYPES),
   joining_date: z.iso.date(),
   status: z.enum(EMPLOYEE_STATUSES),
-  manager_name: z.string().trim().min(2).max(120),
+  manager_name: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .optional(),
   work_location: z.string().trim().min(2).max(120),
 });
 
@@ -188,7 +193,7 @@ export const employeeTools = {
 
   create_employee: {
     description:
-      "Create a new employee. All required employee information must be provided before calling this tool. The joining date must not be in the future.",
+      "Create a new employee. All required employee information must be provided before calling this tool. The manager is optional. The joining date must not be in the future.",
     parameters: employeeAiInputSchema,
     execute: async (
       input: z.infer<typeof employeeAiInputSchema>,
@@ -276,31 +281,31 @@ export const employeeTools = {
     },
   },
 
-  generate_employee_summary: {
-    description:
-      "Retrieve an employee's stored information so the assistant can generate a concise factual HR summary. Do not invent achievements, skills, responsibilities, or other information.",
-    parameters: employeeIdSchema,
-    execute: async ({
-      employee_id,
-    }: {
-      employee_id: string;
-    }) => {
-      const employee = await getEmployee(employee_id);
+generate_employee_summary: {
+  description:
+    "Retrieve an employee's stored information so the assistant can generate a concise factual HR summary. The summary must be based only on the employee record. Do not invent achievements, skills, responsibilities, or other information.",
+  parameters: employeeIdSchema,
+  execute: async ({
+    employee_id,
+  }: {
+    employee_id: string;
+  }) => {
+    const employee = await getEmployee(employee_id);
 
-      if (!employee) {
-        return {
-          success: false,
-          message: "Employee not found.",
-        };
-      }
-
+    if (!employee) {
       return {
-        success: true,
-        employee,
-        needs_generation: true,
+        success: false,
+        message: "Employee not found.",
       };
-    },
+    }
+
+    return {
+      success: true,
+      employee,
+      needs_generation: true,
+    };
   },
+},
 
   save_employee_summary: {
     description:

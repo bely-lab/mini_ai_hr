@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useEffect, useState, useActionState } from "react";
 import { CircleAlert } from "lucide-react";
 
 import {
@@ -12,6 +12,7 @@ import {
   DEPARTMENTS,
   EMPLOYMENT_TYPES,
 } from "@/lib/employees/schema";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,15 +54,42 @@ function getToday() {
   return new Date().toISOString().split("T")[0];
 }
 
+type Manager = {
+  id: string;
+  full_name: string;
+};
+
 export function EmployeeForm() {
   const [state, formAction, pending] = useActionState(
     createEmployeeAction,
     initialState,
   );
 
+  const [managers, setManagers] = useState<Manager[]>([]);
+  const [loadingManagers, setLoadingManagers] = useState(true);
+
   const errors = state.fieldErrors ?? {};
-  const hasFieldErrors = Object.keys(errors).length > 0;
   const today = getToday();
+
+  useEffect(() => {
+    async function loadManagers() {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name")
+        .eq("status", "active")
+        .order("full_name", { ascending: true });
+
+      if (!error && data) {
+        setManagers(data);
+      }
+
+      setLoadingManagers(false);
+    }
+
+    loadManagers();
+  }, []);
 
   return (
     <form
@@ -252,24 +280,35 @@ export function EmployeeForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="manager_name">Manager name</Label>
+  <Label htmlFor="manager_name">Manager</Label>
 
-        <Input
-          id="manager_name"
-          name="manager_name"
-          placeholder="e.g. Alex Johnson"
-          aria-invalid={!!errors.manager_name}
-          aria-describedby={
-            errors.manager_name ? "manager_name-error" : undefined
-          }
-          className={fieldClassName(!!errors.manager_name)}
-        />
+  <select
+  id="manager_name"
+  name="manager_name"
+  className={`${selectClassName} ${fieldClassName(
+    !!errors.manager_name,
+  )}`}
+  defaultValue=""
+  disabled={loadingManagers}
+  aria-invalid={!!errors.manager_name}
+  aria-describedby={
+    errors.manager_name ? "manager_name-error" : undefined
+  }
+>
+  <option value="">No manager</option>
 
-        <FieldError
-          id="manager_name-error"
-          message={errors.manager_name}
-        />
-      </div>
+  {managers.map((manager) => (
+    <option key={manager.id} value={manager.full_name}>
+      {manager.full_name}
+    </option>
+  ))}
+</select>
+
+  <FieldError
+    id="manager_name-error"
+    message={errors.manager_name}
+  />
+</div>
 
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor="work_location">Work location</Label>
