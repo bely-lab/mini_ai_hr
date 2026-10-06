@@ -27,8 +27,46 @@ Clone the repository:
 ```bash
 git clone https://github.com/bely-lab/mini_ai_hr.git
 cd mini_ai_hr
-
-Install dependencies:
+npm install
+Create a `.env.local` file in the project root with the variables from section 4, then start the app:
 
 ```bash
-npm install
+npm run dev
+```
+
+Open http://localhost:3000.
+
+## 4. Environment Variables
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable (public) key |
+| `OPENAI_API_KEY` | OpenAI API key  |
+
+
+## 5. How the AI HR Assistant Works
+
+The assistant uses the OpenAI Responses API with function calling. 
+
+1. The HR Admin sends a request in plain language.
+2. The model picks the matching tool and fills in its arguments.
+3. The server validates the arguments and runs the operation in Supabase PostgreSQL.
+4. The result is returned and the assistant reports it.
+
+Available functionality:
+
+- List employees
+- Find an employee
+- Create an employee
+- Update employee information
+- Deactivate an employee
+- Generate an employee summary
+- Save an employee summary
+
+## 6. Known Limitations
+
+- Only the HR Admin role is supported.
+- Chat history is not saved and resets on page reload.
+- The AI assistant depends on OpenAI availability and account rate limits.
+- There is no pagination on the employee list.
