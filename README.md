@@ -24,13 +24,13 @@ The application also supports generating a short professional employee summary b
 
 Clone the repository:
 
-
+```bash
 git clone https://github.com/bely-lab/mini_ai_hr.git
 cd mini_ai_hr
 npm install
 Create a `.env.local` file in the project root with the variables from section 4, then start the app:
 npm run dev
-
+```
 
 Open http://localhost:3000.
 
