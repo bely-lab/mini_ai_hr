@@ -1,10 +1,14 @@
+"use client";
+
 import { ReactNode } from "react";
+import { Menu } from "lucide-react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 type AppShellProps = {
@@ -12,6 +16,24 @@ type AppShellProps = {
   title: string;
   description?: string;
 };
+
+function MenuToggle() {
+  const { toggleSidebar } = useSidebar();
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+      className="-ml-1 size-9 text-muted-foreground hover:bg-muted hover:text-foreground"
+      aria-label="Toggle sidebar"
+    >
+      <Menu className="size-5" strokeWidth={1.75} />
+      <span className="sr-only">Toggle sidebar</span>
+    </Button>
+  );
+}
 
 export function AppShell({
   children,
@@ -24,9 +46,9 @@ export function AppShell({
 
       <SidebarInset>
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center bg-background/95 px-4 shadow-sm backdrop-blur lg:px-6">
-          <SidebarTrigger className="-ml-1" />
+          <MenuToggle />
 
-          <span className="ml-3 text-sm font-medium">
+          <span className="ml-3 truncate text-sm font-medium text-foreground">
             {title}
           </span>
         </header>

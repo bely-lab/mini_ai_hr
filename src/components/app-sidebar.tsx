@@ -53,20 +53,18 @@ export function AppSidebar() {
     <Sidebar
       variant="sidebar"
       collapsible="icon"
-      className="border-0 shadow-sm"
+      className="bg-sidebar border-r-0"
     >
-      <SidebarHeader className="px-3 py-4">
-        <div className="flex h-10 items-center gap-2.5">
-          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden">
-            <Image
-              src="/logo.png"
-              alt="SITA.dev"
-              width={86}
-              height={86}
-              priority
-              className="size-9 object-contain"
-            />
-          </div>
+      <SidebarHeader className="px-3 py-3">
+        <div className="flex h-11 items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt="SITA.dev"
+            width={96}
+            height={96}
+            priority
+            className="size-11 object-contain"
+          />
 
           <p className="truncate text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
             Mini AI HR
@@ -74,7 +72,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 pt-5">
+      <SidebarContent className="px-2 pt-2">
         <SidebarMenu className="gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -88,7 +86,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   isActive={isActive}
                   tooltip={item.title}
-                  className="h-10 px-3 font-medium transition-colors"
+                  className="h-10 rounded-lg px-3 font-medium"
                 >
                   <Link
                     href={item.href}
@@ -110,7 +108,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               tooltip="Sign out"
               onClick={handleSignOut}
-              className="h-10 px-3 font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="h-10 rounded-lg px-3 font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             >
               <LogOut className="size-[18px]" />
               <span>Sign out</span>
