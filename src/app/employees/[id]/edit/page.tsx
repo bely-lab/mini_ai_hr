@@ -1,28 +1,25 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
 
+import { AppShell } from "@/components/app-shell";
 import { EditEmployeeForm } from "@/components/edit_employee_form";
-import { getEmployee } from "@/lib/employees/data";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { getEmployee } from "@/lib/employees/data";
 
-type EditEmployeePageProps = {
-  params: Promise<{
-    id: string;
-  }>;
+type Props = {
+  params: Promise<{ id: string }>;
 };
 
 export default async function EditEmployeePage({
   params,
-}: EditEmployeePageProps) {
+}: Props) {
   const { id } = await params;
+
   const employee = await getEmployee(id);
 
   if (!employee) {
@@ -30,39 +27,30 @@ export default async function EditEmployeePage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon">
+    <AppShell
+      title="Edit employee"
+      description={`Update the employee record for ${employee.full_name}.`}
+    >
+      <div className="space-y-6">
+        <div>
           <Link
             href={`/employees/${employee.id}`}
-            className="flex h-full w-full items-center justify-center"
+            className={buttonVariants({
+              variant: "ghost",
+              size: "sm",
+            })}
           >
-            <ArrowLeft />
-            <span className="sr-only">Back to employee</span>
+            <ArrowLeft className="size-4" />
+            Back to employee
           </Link>
-        </Button>
-
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Edit employee
-          </h1>
-          <p className="text-muted-foreground">
-            Update the information for {employee.full_name}.
-          </p>
         </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <EditEmployeeForm employee={employee} />
+          </CardContent>
+        </Card>
       </div>
-
-      <Card className="max-w-3xl">
-        <CardHeader>
-          <CardTitle>Employee information</CardTitle>
-        </CardHeader>
-
-        <Separator />
-
-        <CardContent className="pt-6">
-          <EditEmployeeForm employee={employee} />
-        </CardContent>
-      </Card>
-    </div>
+    </AppShell>
   );
 }

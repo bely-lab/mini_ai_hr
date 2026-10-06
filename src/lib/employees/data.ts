@@ -68,11 +68,40 @@ export async function updateEmployee(
 ): Promise<Employee> {
   const validatedUpdates = employeeUpdateSchema.parse(updates);
 
+  if (Object.keys(validatedUpdates).length === 0) {
+    throw new Error("No changes were provided.");
+  }
+
   const supabase = await createClient();
+
+  const { data: currentEmployee, error: fetchError } = await supabase
+    .from("employees")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch employee: ${fetchError.message}`);
+  }
+
+  if (!currentEmployee) {
+    throw new Error("Employee not found.");
+  }
+
+  const changedFields = Object.fromEntries(
+    Object.entries(validatedUpdates).filter(
+      ([field, value]) =>
+        currentEmployee[field as keyof Employee] !== value,
+    ),
+  ) as EmployeeUpdate;
+
+  if (Object.keys(changedFields).length === 0) {
+    throw new Error("No changes were made.");
+  }
 
   const { data, error } = await supabase
     .from("employees")
-    .update(validatedUpdates)
+    .update(changedFields)
     .eq("id", id)
     .select()
     .single();
@@ -89,7 +118,38 @@ export async function updateEmployee(
 }
 
 export async function deactivateEmployee(id: string): Promise<Employee> {
-  return updateEmployee(id, { status: "inactive" });
+  const supabase = await createClient();
+
+  const { data: employee, error: fetchError } = await supabase
+    .from("employees")
+    .select("id, status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch employee: ${fetchError.message}`);
+  }
+
+  if (!employee) {
+    throw new Error("Employee not found.");
+  }
+
+  if (employee.status === "inactive") {
+    throw new Error("Employee is already inactive.");
+  }
+
+  const { data, error } = await supabase
+    .from("employees")
+    .update({ status: "inactive" })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to deactivate employee: ${error.message}`);
+  }
+
+  return data as Employee;
 }
 
 export async function saveEmployeeSummary(
@@ -103,6 +163,24 @@ export async function saveEmployeeSummary(
   }
 
   const supabase = await createClient();
+
+  const { data: currentEmployee, error: fetchError } = await supabase
+    .from("employees")
+    .select("id, summary")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw new Error(`Failed to fetch employee: ${fetchError.message}`);
+  }
+
+  if (!currentEmployee) {
+    throw new Error("Employee not found.");
+  }
+
+  if (currentEmployee.summary?.trim() === cleanedSummary) {
+    return currentEmployee as Employee;
+  }
 
   const { data, error } = await supabase
     .from("employees")

@@ -1,8 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { CircleAlert, Loader2 } from "lucide-react";
+
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,15 +21,17 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    if (error) {
+    if (signInError) {
       setError("Invalid email or password.");
       setLoading(false);
       return;
@@ -34,61 +42,108 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
-      <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-sm">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Mini AI HR</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your HR workspace.
+    <main className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Image
+            src="/logo.png"
+            alt="SITA.dev"
+            width={180}
+            height={48}
+            priority
+            className="h-10 w-auto object-contain"
+          />
+
+          <p className="mt-4 text-sm text-muted-foreground">
+            Mini AI HR
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400"
-            />
-          </div>
+        <div className="rounded-xl border bg-background p-6 shadow-sm sm:p-7">
+          <div className="mb-6">
+            <h1 className="text-xl font-semibold tracking-tight">
+              Sign in
+            </h1>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-400"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600" role="alert">
-              {error}
+            <p className="mt-1 text-sm text-muted-foreground">
+              Access your HR workspace.
             </p>
-          )}
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-5"
           >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                disabled={loading}
+                aria-invalid={!!error}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                disabled={loading}
+                aria-invalid={!!error}
+              />
+            </div>
+
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+              >
+                <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                <p>{error}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !email.trim() || !password}
+            >
+              {loading && (
+                <Loader2 className="size-4 animate-spin" />
+              )}
+
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          Secure HR administration workspace
+        </p>
       </div>
     </main>
   );

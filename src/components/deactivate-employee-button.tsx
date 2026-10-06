@@ -1,44 +1,63 @@
 "use client";
 
-import { useTransition } from "react";
+import { useActionState } from "react";
 
-import { deactivateEmployeeAction } from "@/app/employees/actions";
+import {
+  deactivateEmployeeAction,
+  type EmployeeActionState,
+} from "@/app/employees/actions";
 import { Button } from "@/components/ui/button";
 
 type DeactivateEmployeeButtonProps = {
   employeeId: string;
 };
 
+const initialState: EmployeeActionState = {};
+
 export function DeactivateEmployeeButton({
   employeeId,
 }: DeactivateEmployeeButtonProps) {
-  const [pending, startTransition] = useTransition();
-
-  function handleDeactivate() {
-    const confirmed = window.confirm(
-      "Are you sure you want to deactivate this employee?",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const formData = new FormData();
-    formData.set("id", employeeId);
-
-    startTransition(async () => {
-      await deactivateEmployeeAction(formData);
-    });
-  }
+  const [state, formAction, pending] = useActionState(
+    async (
+      _previousState: EmployeeActionState,
+      _formData: FormData,
+    ): Promise<EmployeeActionState> => {
+      return deactivateEmployeeAction(employeeId);
+    },
+    initialState,
+  );
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      disabled={pending}
-      onClick={handleDeactivate}
-    >
-      {pending ? "Deactivating..." : "Deactivate"}
-    </Button>
+    <div className="space-y-2">
+      <form
+        action={formAction}
+        onSubmit={(event) => {
+          if (
+            !window.confirm(
+              "Are you sure you want to deactivate this employee?",
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <Button
+          type="submit"
+          variant="destructive"
+          disabled={pending}
+        >
+          {pending ? "Deactivating..." : "Deactivate employee"}
+        </Button>
+      </form>
+
+      {state.error && (
+        <p
+          role="alert"
+          className="text-sm font-medium text-destructive"
+        >
+          {state.error}
+        </p>
+      )}
+    </div>
   );
 }
