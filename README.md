@@ -61,8 +61,40 @@ Available functionality:
 - Deactivate an employee
 - Generate an employee summary
 - Save an employee summary
+## 6. Example Prompts
 
-## 6. Known Limitations
+**Create an employee**
+```
+Create an employee named John Doe. Email john@example.com. Phone +46701234567.
+Job title Software Engineer. Department Engineering. Employment type full time.
+Joining date 2026-06-01. Manager Sarah Miller. Location Stockholm.
+```
+
+**View employees**
+```
+Show me all active employees.
+```
+
+**Find an employee**
+```
+Find John Doe.
+```
+
+**Update an employee**
+```
+Update John Doe's department to Product and job title to Product Engineer.
+```
+
+**Deactivate an employee**
+```
+Deactivate John Doe.
+```
+
+**Generate a summary**
+```
+Generate an employee summary for John Doe.
+```
+## 7. Known Limitations
 
 - Only the HR Admin role is supported.
 - Chat history is not saved and resets on page reload.
